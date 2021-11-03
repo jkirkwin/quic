@@ -202,10 +202,11 @@ QuicStreamBase::SendPendingData (void)
 
       uint32_t s = std::min (availableWindow, (uint32_t)m_quicl5->GetMaxPacketSize ());
 
-      NS_LOG_DEBUG ("BEFOREAvailable Window " << AvailableWindow () <<
-                    "Stream RWnd " << StreamWindow () <<
-                    "BytesInFlight " << m_txBuffer->BytesInFlight () << "BufferedSize " << m_txBuffer->AppSize () <<
-                    "MaxPacketSize " << (uint32_t)m_quicl5->GetMaxPacketSize ());
+      NS_LOG_DEBUG ("BEFORE: Available Window " << AvailableWindow () <<
+                    " Stream RWnd " << StreamWindow () <<
+                    " BytesInFlight " << m_txBuffer->BytesInFlight () << 
+                    " BufferedSize " << m_txBuffer->AppSize () <<
+                    " MaxPacketSize " << (uint32_t)m_quicl5->GetMaxPacketSize ());
 
       int success = SendDataFrame ((SequenceNumber32)m_sentSize, s);
 
@@ -216,10 +217,11 @@ QuicStreamBase::SendPendingData (void)
           return -1;
         }
 
-      NS_LOG_DEBUG ("AFTERAvailable Window " << AvailableWindow () <<
-                    "Stream RWnd " << StreamWindow () <<
-                    "BytesInFlight " << m_txBuffer->BytesInFlight () << "BufferedSize " << m_txBuffer->AppSize () <<
-                    "MaxPacketSize " << (uint32_t)m_quicl5->GetMaxPacketSize ());
+      NS_LOG_DEBUG ("AFTER: Available Window " << AvailableWindow () <<
+                    " Stream RWnd " << StreamWindow () <<
+                    " BytesInFlight " << m_txBuffer->BytesInFlight () << 
+                    " BufferedSize " << m_txBuffer->AppSize () <<
+                    " MaxPacketSize " << (uint32_t)m_quicl5->GetMaxPacketSize ());
 
       ++nFrameSent;
 
