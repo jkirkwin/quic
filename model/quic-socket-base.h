@@ -667,9 +667,10 @@ protected:
   /**
    * \brief Perform the real connection tasks: start the initial handshake for non-0-RTT
    *
+   * \param address The remote address to connect to. 
    * \return 0 on success
    */
-  int DoConnect (void);
+  int DoConnect (const Address& address);
 
   /**
    * \brief Perform the real connection tasks: start the initial 0-RTT handshake

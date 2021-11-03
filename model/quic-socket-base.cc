@@ -866,7 +866,7 @@ QuicSocketBase::Connect (const Address & address)
         "CONNECTION not authenticated: cannot perform 0-RTT Handshake");
       // connect the underlying UDP socket
       m_quicl4->UdpConnect (address, this);
-      return DoConnect ();
+      return DoConnect (address);
     }
 
 }
@@ -2519,7 +2519,7 @@ QuicSocketBase::OnReceivedTransportParameters (
 }
 
 int
-QuicSocketBase::DoConnect (void)
+QuicSocketBase::DoConnect (const Address& address)
 {
   NS_LOG_FUNCTION (this);
 
@@ -2531,7 +2531,15 @@ QuicSocketBase::DoConnect (void)
 
   if (m_socketState == LISTENING)
     {
-      SetState (CONNECTING_SVR);
+      bool shouldConnect = NotifyConnectionRequest(address);
+      if (shouldConnect) 
+      {
+        SetState (CONNECTING_SVR);
+      }
+      else 
+      {
+        NS_LOG_DEBUG("Server denied connection request. Ignoring connection attempt.");
+      }
     }
   else if (m_socketState == IDLE)
     {
@@ -2569,7 +2577,10 @@ QuicSocketBase::DoFastConnect (void)
 
 void
 QuicSocketBase::ConnectionSucceeded ()
-{ // Wrapper to protected function NotifyConnectionSucceeded() so that it can
+{ 
+  NS_LOG_FUNCTION (this);
+
+  // Wrapper to protected function NotifyConnectionSucceeded() so that it can
   // be called as a scheduled event
   NotifyConnectionSucceeded ();
   // The if-block below was moved from ProcessSynSent() to here because we need
@@ -2627,11 +2638,15 @@ QuicSocketBase::ReceivedData (Ptr<Packet> p, const QuicHeader& quicHeader,
     {
 
       if (m_serverBusy)
-        {
-          AbortConnection (QuicSubheader::TransportErrorCodes_t::SERVER_BUSY,
-                           "Server too busy to accept new connections");
-          return;
-        }
+      {
+        AbortConnection (QuicSubheader::TransportErrorCodes_t::SERVER_BUSY,
+                          "Server too busy to accept new connections");
+        return;
+      }
+      else if (!NotifyConnectionRequest(address)) {
+        NS_LOG_DEBUG("Server application declined connection.");
+        return;
+      }
 
       m_couldContainTransportParameters = true;
 
@@ -2644,7 +2659,7 @@ QuicSocketBase::ReceivedData (Ptr<Packet> p, const QuicHeader& quicHeader,
         m_keyPhase =
           QuicHeader::PHASE_ONE;
       SetState (OPEN);
-      Simulator::ScheduleNow (&QuicSocketBase::ConnectionSucceeded, this);
+      NotifyNewConnectionCreated(this, address);
       m_congestionControl->CongestionStateSet (m_tcb,
                                                TcpSocketState::CA_OPEN);
       m_couldContainTransportParameters = false;
@@ -2712,7 +2727,7 @@ QuicSocketBase::ReceivedData (Ptr<Packet> p, const QuicHeader& quicHeader,
       m_receivedPacketNumbers.push_back (quicHeader.GetPacketNumber ());
 
       SetState (OPEN);
-      Simulator::ScheduleNow (&QuicSocketBase::ConnectionSucceeded, this);
+      NotifyNewConnectionCreated(this, address);
       m_congestionControl->CongestionStateSet (m_tcb,
                                                TcpSocketState::CA_OPEN);
       SendPendingData (true);
