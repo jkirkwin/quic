@@ -260,10 +260,9 @@ QuicStreamBase::SendDataFrame (SequenceNumber32 seq, uint32_t maxSize)
   int size = m_quicl5->Send (frame);
   if (size < 0)
     {
-      frame->RemoveHeader (sub);
       m_txBuffer->Rejected (frame);
-      NS_LOG_WARN ("Sending error - could not append packet to socket buffer. Putting packet back in stream buffer");
-      m_sentSize -= frame->GetSize ();
+      NS_LOG_WARN ("Sending error - could not append packet to socket buffer. Putting packet back in stream buffer"); 
+      m_sentSize -= frame->GetSize (); // TODO Does this ever cause overflow?
     }
   else if (m_streamStateSend == SEND and m_fin and (m_streamDirectionType == SENDER or m_streamDirectionType == BIDIRECTIONAL))
     {
