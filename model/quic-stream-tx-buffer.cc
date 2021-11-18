@@ -278,6 +278,7 @@ QuicStreamTxBuffer::GetNewSegment (uint32_t numBytes)
           m_appList.push_front (toBeBuffered);
 
           NS_ASSERT_MSG(outItemSize == numBytes, "Output item should be the maximal size after splitting a buffered item"); 
+          break; // Prevent the erased iterator from being used again
         }
 
       it++;
