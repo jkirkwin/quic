@@ -108,7 +108,7 @@ public:
    *
    * \param data a smart pointer to a packet
    * \param streamId the stream ID for the packet
-   * \return always 0
+   * \return the amount of data that was sent
    */
   int DispatchSend (Ptr<Packet> data, uint64_t streamId);
 
