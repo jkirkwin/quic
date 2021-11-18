@@ -424,8 +424,6 @@ std::vector<Ptr<QuicSocketTxItem> > QuicSocketTxBuffer::OnAckUpdate (
                 "Packet " << (*sent_it)->m_packetNumber << " of size " << (*sent_it)->m_packet->GetSize() << " missing");
               break;
             }
-          // The packet is in the current block: ACK it
-          NS_LOG_LOGIC ("Packet " << (*sent_it)->m_packetNumber << " ACKed");
           bool notInGap =
             ((gap_it >= compGaps.end ())
              || ((*sent_it)->m_packetNumber
@@ -434,6 +432,9 @@ std::vector<Ptr<QuicSocketTxItem> > QuicSocketTxBuffer::OnAckUpdate (
           if ((*sent_it)->m_packetNumber <= SequenceNumber32 ((*ack_it))
               and notInGap and (*sent_it)->m_sacked == false)
             {
+              // The packet is in the current block: ACK it
+              NS_LOG_INFO ("Packet " << (*sent_it)->m_packetNumber << " ACKed");
+
               (*sent_it)->m_sacked = true;
               (*sent_it)->m_ackTime = Now ();
               newlyAcked.push_back ((*sent_it));
