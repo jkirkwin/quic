@@ -2210,6 +2210,27 @@ QuicSocketBase::OnSendingAckFrame ()
         }
     }
 
+  // Log the ack blocks and gaps that we will use
+  std::vector<uint32_t> compAckBlocks = additionalAckBlocks;
+  compAckBlocks.insert (compAckBlocks.begin (), largestAcknowledged.GetValue());
+
+  std::vector<uint32_t> compGaps = gaps;
+
+  std::stringstream gap_print;
+  for (auto i = gaps.begin (); i != gaps.end (); ++i)
+    {
+      gap_print << (*i) << " ";
+    }
+
+  std::stringstream block_print;
+  for (auto i = compAckBlocks.begin (); i != compAckBlocks.end (); ++i)
+    {
+      block_print << (*i) << " ";
+    }
+
+  NS_LOG_LOGIC (
+    "Largest ACK: " << largestAcknowledged << ", blocks: " << block_print.str () << ", gaps: " << gap_print.str ());
+
 
   Time delay = Simulator::Now () - m_lastReceived;
   uint64_t ack_delay = delay.GetMicroSeconds ();
