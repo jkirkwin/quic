@@ -124,6 +124,7 @@ QuicStreamRxBuffer::Add (Ptr<Packet> p, const QuicSubheader& sub)
             }
 
           // Find the right place to insert packet (TODO: binary search would be more efficient)
+          // TODO more evidence of inefficiency we can use in the report. May be able to fix this to improve performance
           bool inserted = false;
           for (it = m_streamRecvList.begin (); it < m_streamRecvList.end ();
                ++it)

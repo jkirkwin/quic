@@ -397,6 +397,7 @@ QuicL5Protocol::DisgregateRecv (Ptr<Packet> data)
 Ptr<QuicStreamBase>
 QuicL5Protocol::SearchStream (uint64_t streamId)
 {
+  // TODO can we keep m_streams sorted and do a binary search instead of this ugly linear one?
   NS_LOG_FUNCTION (this);
   std::vector<Ptr<QuicStreamBase> >::iterator it = m_streams.begin ();
   Ptr<QuicStreamBase> stream;
