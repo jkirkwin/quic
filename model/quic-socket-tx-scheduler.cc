@@ -157,7 +157,7 @@ QuicSocketTxScheduler::Add (Ptr<QuicSocketTxItem> item, bool retx)
   QuicSubheader qsb;
   item->m_packet->PeekHeader (qsb);
   double priority = -1;
-  NS_LOG_INFO ("Adding packet on stream " << qsb.GetStreamId ());
+  NS_LOG_INFO ("Adding packet " << item->m_packetNumber << " on stream " << qsb.GetStreamId ());
   if (!retx)
     {
       NS_LOG_INFO ("Standard item, add at end (offset " << qsb.GetOffset () << ")");

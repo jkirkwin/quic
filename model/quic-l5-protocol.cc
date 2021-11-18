@@ -221,6 +221,12 @@ QuicL5Protocol::DispatchSend (Ptr<Packet> data, uint64_t streamId)
     }
 
   stream = SearchStream (streamId);
+
+  NS_LOG_LOGIC (
+      "Attempting to send " << data->GetSize() 
+      << " bytes. Stream tx buffer space: " 
+      << stream->GetStreamTxAvailable()
+    );
   int sentData = 0;
 
   if (stream->GetStreamDirectionType () == QuicStream::SENDER

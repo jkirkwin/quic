@@ -274,8 +274,10 @@ QuicStreamTxBuffer::GetNewSegment (uint32_t numBytes)
           m_appList.erase (it);
           m_appSize -= currentItem->m_packet->GetSize ();
 
+          // Add the right part of the split back to the app list
           m_appList.push_front (toBeBuffered);
 
+          NS_ASSERT_MSG(outItemSize == numBytes, "Output item should be the maximal size after splitting a buffered item"); 
         }
 
       it++;

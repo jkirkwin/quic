@@ -1495,6 +1495,7 @@ QuicSocketBase::DoRetransmit (std::vector<Ptr<QuicSocketTxItem> > lostPackets)
 void
 QuicSocketBase::ReTxTimeout ()
 {
+  NS_LOG_FUNCTION (this);
   if (Simulator::Now () < m_tcb->m_nextAlarmTrigger)
     {
       NS_LOG_INFO ("Canceled alarm");
@@ -2204,6 +2205,7 @@ QuicSocketBase::OnSendingAckFrame ()
       // Limit the number of gaps that are sent in an ACK (older packets have already been retransmitted)
       if (ackBlockCount >= m_maxTrackedGaps)
         {
+          NS_LOG_INFO("Abbreviating list of gaps in ACK");
           break;
         }
     }
@@ -2311,6 +2313,7 @@ QuicSocketBase::OnReceivedAckFrame (QuicSubheader &sub)
   // Recover from losses
   if (!lostPackets.empty ())
     {
+      NS_LOG_INFO("Detected " << lostPackets.size() << " lost packets. Calling DoRetransmit.");
       if (m_quicCongestionControlLegacy)
         {
           //Enter recovery (RFC 6675, Sec. 5)
@@ -2790,6 +2793,7 @@ QuicSocketBase::ReceivedData (Ptr<Packet> p, const QuicHeader& quicHeader,
       // in this case we cannot explicitely ACK it!
       // check if delayed ACK is used
       m_receivedPacketNumbers.push_back (quicHeader.GetPacketNumber ());
+      NS_LOG_INFO ("Received packet " << quicHeader.GetPacketNumber().GetValue());
       onlyAckFrames = m_quicl5->DispatchRecv (p, address);
 
     }

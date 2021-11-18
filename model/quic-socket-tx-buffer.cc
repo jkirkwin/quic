@@ -403,11 +403,14 @@ std::vector<Ptr<QuicSocketTxItem> > QuicSocketTxBuffer::OnAckUpdate (
     "Largest ACK: " << largestAcknowledged << ", blocks: " << block_print.str () << ", gaps: " << gap_print.str ());
 
   // Iterate over the ACK blocks and gaps
-  for (uint32_t numAckBlockAnalyzed = 0; numAckBlockAnalyzed < ackBlockCount;
+  for (uint32_t numAckBlockAnalyzed = 0; 
+       numAckBlockAnalyzed < ackBlockCount;
        ++numAckBlockAnalyzed, ++ack_it, ++gap_it)
     {
+      // Visit sentList in reverse order for optimization
       for (auto sent_it = m_sentList.rbegin ();
-           sent_it != m_sentList.rend () and !m_sentList.empty (); ++sent_it)                    // Visit sentList in reverse Order for optimization
+           sent_it != m_sentList.rend () and !m_sentList.empty (); 
+           ++sent_it)
         {
           NS_LOG_LOGIC (
             "Consider packet " << (*sent_it)->m_packetNumber << " (ACK block " << SequenceNumber32 ((*ack_it)) << ")");
@@ -418,7 +421,7 @@ std::vector<Ptr<QuicSocketTxItem> > QuicSocketTxBuffer::OnAckUpdate (
           if (inGap)               // Just for optimization we suppose All is perfectly ordered
             {
               NS_LOG_LOGIC (
-                "Packet " << (*sent_it)->m_packetNumber << " missing");
+                "Packet " << (*sent_it)->m_packetNumber << " of size " << (*sent_it)->m_packet->GetSize() << " missing");
               break;
             }
           // The packet is in the current block: ACK it
@@ -554,7 +557,15 @@ uint32_t QuicSocketTxBuffer::Retransmission (SequenceNumber32 packetNumber)
           retx->m_packet = Create<Packet>();
           NS_LOG_INFO (
             "Retx packet " << item->m_packetNumber << " as " << retx->m_packetNumber.GetValue ());
+
+          auto packetNo = item->m_packetNumber.GetValue();
+          auto packetSize = item->m_packet->GetSize();
+          auto retxNo = retx->m_packetNumber.GetValue ();
           QuicSocketTxItem::MergeItems (*retx, *item);
+          auto retxSize = retx->m_packet->GetSize();
+
+          NS_LOG_INFO("Packet " << packetNo << " had size " << packetSize << " - ReTx Packet " << retxNo << " has size " << retxSize);
+
           retx->m_lost = false;
           retx->m_retrans = true;
           toRetx += retx->m_packet->GetSize ();
@@ -568,6 +579,7 @@ uint32_t QuicSocketTxBuffer::Retransmission (SequenceNumber32 packetNumber)
             }
           else
             {
+              NS_LOG_LOGIC ("Adding packet " << retx->m_packetNumber << " to scheduler (size " << retx->m_packet->GetSize() << ")");
               m_scheduler->Add (retx, true);
             }
         }
