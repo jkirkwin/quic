@@ -482,6 +482,29 @@ QuicStreamBase::Recv (Ptr<Packet> frame, const QuicSubheader& sub, Address &addr
               SetMaxStreamData (sub.GetMaxStreamData ());
               NS_LOG_LOGIC ("Received window set to offset " << sub.GetMaxStreamData ());
             }
+
+          if (m_recvSize > sub.GetOffset()) {
+            // We've already gotten at least the beginning of this data.
+            // TODO consider the possibility of receiving a retransmission 
+            //  which has part of a previously received frame with new data appended to the end. 
+            //  In that case we need to add just the new fragment to the buffer?
+            
+            uint64_t frameStart = sub.GetOffset();
+            uint64_t frameEnd = sub.GetOffset() + sub.GetLength() - 1;
+
+            NS_LOG_WARN (
+              "Recv size greater than frame offset. Skipping unordered frame. Start: " << frameStart
+              << "\tEnd: " << frameEnd << "\tRecv size: " << m_recvSize
+              );
+            if (frameEnd >= m_recvSize) 
+              {
+                // The frame contains the current offset position. This may indicate an issue
+                // where retx packets have been merged. 
+                NS_LOG_WARN ("Frame runs over the current offset position");
+              }
+
+            break;
+          }
           NS_LOG_INFO ("Buffering unordered received frame - offset " << m_recvSize << ", frame offset " << sub.GetOffset ());
           if (!m_rxBuffer->Add (frame, sub) && frame->GetSize () > 0)
             {

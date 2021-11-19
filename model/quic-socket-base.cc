@@ -1468,13 +1468,20 @@ QuicSocketBase::SetReTxTimeout ()
   m_tcb->m_nextAlarmTrigger = Simulator::Now () + alarmDuration;
 }
 
+
+// TODO the vector of lost packets in DoRetransmit is not used?
 void
 QuicSocketBase::DoRetransmit (std::vector<Ptr<QuicSocketTxItem> > lostPackets)
 {
   NS_LOG_FUNCTION (this);
   // Get packets to retransmit
-  SequenceNumber32 next = ++m_tcb->m_nextTxSequence;
-  uint32_t toRetx = m_txBuffer->Retransmission (next);
+  // SequenceNumber32 next = ++m_tcb->m_nextTxSequence; // TODO why are we only incrementing this once? I think it's because we're sending a single massive packet with all the retx data.
+  // uint32_t toRetx = m_txBuffer->Retransmission (next);
+
+  // Temp solution to retx problem: call Retransmission to move everything back into 
+  // the app buffer, but send those retx packets as normal via the scheduler.
+  uint32_t toRetx = m_txBuffer->Retransmission (m_tcb->m_nextTxSequence + 1);
+
   NS_LOG_INFO (toRetx << " bytes to retransmit");
   NS_LOG_DEBUG ("Send the retransmitted frame");
   uint32_t win = AvailableWindow ();
@@ -1489,7 +1496,21 @@ QuicSocketBase::DoRetransmit (std::vector<Ptr<QuicSocketTxItem> > lostPackets)
 
   // Send the retransmitted data
   NS_LOG_INFO ("Retransmitted packet, next sequence number " << m_tcb->m_nextTxSequence);
+
+  // Original approach that causes very large (failed) retransmissions when multiple 
+  // packets are lost.
+  /*
   SendDataPacket (next, toRetx, m_connected);
+  */
+
+  // Alternative 1: Send only the max allowed portion of the retx data.
+  /*
+  auto maxLimit = std::min(GetSegSize(), toRetx);
+  SendDataPacket (next, maxLimit, m_connected); 
+  */
+  
+  // Alternative 2: Use the scheduler to send the retx packets as done for non-retx packets.
+  SendPendingData(m_connected);
 }
 
 void

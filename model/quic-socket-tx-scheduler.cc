@@ -205,6 +205,38 @@ QuicSocketTxScheduler::GetNewSegment (uint32_t numBytes)
   outItem->m_packet = Create<Packet> ();
   uint32_t outItemSize = 0;
 
+  // TODO Below we try making sure that we don't split/combine retx packets.
+  //      This is an attempt to ensure that we don't cause an issue on the rx side
+  //      which does account for the possibility that a retransmitted, missing packet might 
+  //      contain frames of different lengths (i.e. with different bounds) than when they were
+  //      originally sent. This is problematic if the rx side receives the same data twice (i.e. 
+  //      if the first packet makes it to the client but the server still thinks it needs to retx)
+  //      but with different offset boundaries.
+  // TODO if this works, combine it with the logic in the loop below for non-retx packets
+  if (m_appSize > 0) 
+    {
+      Ptr<QuicSocketTxScheduleItem> firstScheduleItem = m_appList.top();
+      Ptr<QuicSocketTxItem> txItem = firstScheduleItem->GetItem();
+      Ptr<Packet> packet = txItem->m_packet;
+      auto packetSize = packet->GetSize();
+
+      bool isRetx = firstScheduleItem->GetPriority() == -1;
+      if (isRetx) 
+        {
+          NS_LOG_DEBUG ("Next packet is ReTx packet " << txItem->m_packetNumber);
+
+          NS_LOG_DEBUG ("Returning single ReTx item for packet " << txItem->m_packetNumber);
+
+          m_appSize -= packetSize;
+          m_appList.pop();
+
+          QuicSocketTxItem::MergeItems (*outItem, *txItem);
+          outItemSize += packetSize;
+
+          NS_LOG_INFO ("Update: remaining App Size " << m_appSize << ", object size " << outItemSize);
+          return outItem;
+        }
+    }
 
   while (m_appSize > 0 && outItemSize < numBytes)
     {
