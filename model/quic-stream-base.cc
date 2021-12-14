@@ -485,10 +485,7 @@ QuicStreamBase::Recv (Ptr<Packet> frame, const QuicSubheader& sub, Address &addr
 
           if (m_recvSize > sub.GetOffset()) {
             // We've already gotten at least the beginning of this data.
-            // TODO consider the possibility of receiving a retransmission 
-            //  which has part of a previously received frame with new data appended to the end. 
-            //  In that case we need to add just the new fragment to the buffer?
-            
+                        
             uint64_t frameStart = sub.GetOffset();
             uint64_t frameEnd = sub.GetOffset() + sub.GetLength() - 1;
 

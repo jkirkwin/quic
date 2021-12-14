@@ -1469,47 +1469,18 @@ QuicSocketBase::SetReTxTimeout ()
 }
 
 
-// TODO the vector of lost packets in DoRetransmit is not used?
+// TODO Why is the vector of lost packets in DoRetransmit not used?
 void
 QuicSocketBase::DoRetransmit (std::vector<Ptr<QuicSocketTxItem> > lostPackets)
 {
   NS_LOG_FUNCTION (this);
-  // Get packets to retransmit
-  // SequenceNumber32 next = ++m_tcb->m_nextTxSequence; // TODO why are we only incrementing this once? I think it's because we're sending a single massive packet with all the retx data.
-  // uint32_t toRetx = m_txBuffer->Retransmission (next);
 
-  // Temp solution to retx problem: call Retransmission to move everything back into 
-  // the app buffer, but send those retx packets as normal via the scheduler.
+  // Move the lost packets back into the Tx bufer
   uint32_t toRetx = m_txBuffer->Retransmission (m_tcb->m_nextTxSequence + 1);
-
   NS_LOG_INFO (toRetx << " bytes to retransmit");
-  NS_LOG_DEBUG ("Send the retransmitted frame");
-  uint32_t win = AvailableWindow ();
-  uint32_t connWin = ConnectionWindow ();
-  uint32_t bytesInFlight = BytesInFlight ();
-  NS_LOG_DEBUG (
-    "BEFORE Available Window " << win
-                               << " Connection RWnd " << connWin
-                               << " BytesInFlight " << bytesInFlight
-                               << " BufferedSize " << m_txBuffer->AppSize ()
-                               << " MaxPacketSize " << GetSegSize ());
 
-  // Send the retransmitted data
-  NS_LOG_INFO ("Retransmitted packet, next sequence number " << m_tcb->m_nextTxSequence);
-
-  // Original approach that causes very large (failed) retransmissions when multiple 
-  // packets are lost.
-  /*
-  SendDataPacket (next, toRetx, m_connected);
-  */
-
-  // Alternative 1: Send only the max allowed portion of the retx data.
-  /*
-  auto maxLimit = std::min(GetSegSize(), toRetx);
-  SendDataPacket (next, maxLimit, m_connected); 
-  */
-  
-  // Alternative 2: Use the scheduler to send the retx packets as done for non-retx packets.
+  // Allow the scheduler to packetize the retx data appropriately so we respect 
+  // the MTU, CWND, etc.
   SendPendingData(m_connected);
 }
 
@@ -1522,7 +1493,6 @@ QuicSocketBase::ReTxTimeout ()
       NS_LOG_INFO ("Canceled alarm");
       return;
     }
-  NS_LOG_FUNCTION (this);
   NS_LOG_INFO ("ReTxTimeout Expired at time " << Simulator::Now ().GetSeconds ());
   // Handshake packets are outstanding)
   if (m_tcb->m_alarmType == 0 && (m_socketState == CONNECTING_CLT || m_socketState == CONNECTING_SVR))

@@ -205,14 +205,10 @@ QuicSocketTxScheduler::GetNewSegment (uint32_t numBytes)
   outItem->m_packet = Create<Packet> ();
   uint32_t outItemSize = 0;
 
-  // TODO Below we try making sure that we don't split/combine retx packets.
-  //      This is an attempt to ensure that we don't cause an issue on the rx side
-  //      which does account for the possibility that a retransmitted, missing packet might 
-  //      contain frames of different lengths (i.e. with different bounds) than when they were
-  //      originally sent. This is problematic if the rx side receives the same data twice (i.e. 
-  //      if the first packet makes it to the client but the server still thinks it needs to retx)
-  //      but with different offset boundaries.
-  // TODO if this works, combine it with the logic in the loop below for non-retx packets
+  //     Below we try making sure that we don't split/combine retx packets.
+  //      This simplifies the logic on the Rx side which has been modified to account for the 
+  //      possibility that duplicate stream data will be received due to lost ACKs/spurious
+  //      retransmissions. 
   if (m_appSize > 0) 
     {
       Ptr<QuicSocketTxScheduleItem> firstScheduleItem = m_appList.top();
